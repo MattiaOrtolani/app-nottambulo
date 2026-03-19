@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: app-nottambulo
+data:
+  db.host: postgres-svc
+  db.port: "5432"
+  db.name: appdb
+  keycloak.auth-url: http://keycloak:8080/auth/realms/app-nottambulo
+  keycloak.realm: app-nottambulo

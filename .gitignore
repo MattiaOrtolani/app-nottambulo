@@ -1,0 +1,26 @@
+# Java / Maven
+/target/
+**/target/
+**/*.jar
+*.log
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node
+/frontend/node_modules/
+/backend/node_modules/
+**/node_modules/
+/dist/
+**/dist/
+npm-debug.log*
+
+# IDE/editor
+*.swp
+*.swo
+*.DS_Store
+.vscode/
+.idea/
+*.iml
+
+# OS
+Thumbs.db
+*.tmp
