@@ -6,8 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/mattiaortolani/app-nottambulo.git
-    targetRevision: HEAD
+    repoURL: https://github.com/MattiaOrtolani/app-nottambulo.git
+    targetRevision: main
     path: k8s
     directory:
       recurse: true

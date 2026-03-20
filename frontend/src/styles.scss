@@ -1,1 +1,119 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+  --bg: #f5efe4;
+  --bg-soft: #fffaf1;
+  --surface: rgba(255, 251, 244, 0.86);
+  --surface-strong: #fff7ea;
+  --line: rgba(63, 42, 18, 0.12);
+  --text: #2c1f12;
+  --muted: #6d5942;
+  --accent: #d14d2f;
+  --accent-dark: #8f2d1d;
+  --accent-soft: #ffd7c7;
+  --success: #2c8b61;
+  --danger: #bb3e35;
+  --shadow: 0 20px 60px rgba(61, 37, 10, 0.12);
+  --radius-xl: 28px;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 196, 132, 0.32), transparent 30%),
+    linear-gradient(180deg, #f8f1e5 0%, #f4eadb 45%, #efe2d0 100%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+}
+
+.pill-button,
+.ghost-button,
+.danger-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.pill-button {
+  color: #fff9f3;
+  background: linear-gradient(135deg, var(--accent) 0%, #f28954 100%);
+  box-shadow: 0 12px 28px rgba(209, 77, 47, 0.24);
+}
+
+.ghost-button {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--line);
+}
+
+.danger-button {
+  color: #fff6f3;
+  background: linear-gradient(135deg, #d55a48 0%, var(--danger) 100%);
+}
+
+.pill-button:hover,
+.ghost-button:hover,
+.danger-button:hover {
+  transform: translateY(-1px);
+}
+
+.status {
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+}
+
+.status-error {
+  color: #6c1b13;
+  background: rgba(213, 90, 72, 0.12);
+}
+
+.status-info {
+  color: #6a501f;
+  background: rgba(255, 206, 125, 0.22);
+}
+
+.status-success {
+  color: #175239;
+  background: rgba(44, 139, 97, 0.12);
+}

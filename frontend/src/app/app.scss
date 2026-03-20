@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.app-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 1.25rem 3rem;
+}
+
+.aurora {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.aurora-left {
+  top: 4rem;
+  left: -8rem;
+  width: 18rem;
+  height: 18rem;
+  background: rgba(255, 122, 89, 0.45);
+}
+
+.aurora-right {
+  top: 12rem;
+  right: -6rem;
+  width: 16rem;
+  height: 16rem;
+  background: rgba(255, 201, 107, 0.35);
+}
