@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/MattiaOrtolani/app-nottambulo-backend:latest
+          image: ghcr.io/mattiaortolani/app-nottambulo-backend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/MattiaOrtolani/app-nottambulo-frontend:latest
+          image: ghcr.io/mattiaortolani/app-nottambulo-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
