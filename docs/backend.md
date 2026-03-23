@@ -14,6 +14,7 @@
 ## Responsabilita'
 
 Il backend espone API REST per:
+
 - consultazione pubblica dei locali
 - gestione amministrativa dei locali
 - integrazione con autenticazione JWT emessa da Keycloak
@@ -47,11 +48,13 @@ Il backend espone API REST per:
 ## Endpoint principali
 
 Pubblici:
+
 - `GET /api/locali`
 - `GET /api/locali/{id}`
 - `GET /api/locali/nearby?lat={lat}&lon={lon}`
 
 Protetti admin:
+
 - `POST /api/admin/locali`
 - `PUT /api/admin/locali/{id}`
 - `DELETE /api/admin/locali/{id}`
@@ -59,6 +62,7 @@ Protetti admin:
 ## Sicurezza
 
 Il backend e' configurato come resource server JWT:
+
 - `/actuator/health` pubblico
 - `/api/locali/**` pubblico in lettura
 - `/api/admin/**` accessibile solo a utenti autenticati con ruolo `admin`
@@ -68,9 +72,11 @@ I ruoli vengono estratti dal token Keycloak leggendo `realm_access.roles`.
 ## Configurazione
 
 File principale:
+
 - `backend/src/main/resources/application.yml`
 
 Valori importanti via environment:
+
 - `SPRING_DATASOURCE_URL`
 - `SPRING_DATASOURCE_USERNAME`
 - `SPRING_DATASOURCE_PASSWORD`

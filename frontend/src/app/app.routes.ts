@@ -1,34 +1,40 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './guards/admin.guard';
-import { AdminLocaliPageComponent } from './pages/admin-locali-page.component';
-import { LoginPageComponent } from './pages/login-page.component';
-import { NearbyPageComponent } from './pages/nearby-page.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    component: NearbyPageComponent
-  },
-  {
-    path: 'nearby',
-    component: NearbyPageComponent
-  },
-  {
-    path: 'login',
-    component: LoginPageComponent
-  },
-  {
-    path: 'admin',
-    pathMatch: 'full',
-    redirectTo: 'admin/locali'
-  },
-  {
-    path: 'admin/locali',
-    component: AdminLocaliPageComponent,
-    canActivate: [adminGuard]
-  },
-  {
-    path: '**',
-    redirectTo: ''
-  }
+	{
+		path: '',
+		loadComponent: () =>
+			import('./pages/landing-page.component').then((module) => module.LandingPageComponent),
+	},
+	{
+		path: 'mappa',
+		loadComponent: () =>
+			import('./pages/nearby-page.component').then((module) => module.NearbyPageComponent),
+	},
+	{
+		path: 'nearby',
+		pathMatch: 'full',
+		redirectTo: 'mappa',
+	},
+	{
+		path: 'login',
+		loadComponent: () =>
+			import('./pages/login-page.component').then((module) => module.LoginPageComponent),
+	},
+	{
+		path: 'admin',
+		pathMatch: 'full',
+		redirectTo: 'admin/locali',
+	},
+	{
+		path: 'admin/locali',
+		loadComponent: () =>
+			import('./pages/admin-locali-page.component').then((module) => module.AdminLocaliPageComponent),
+		canActivate: [adminGuard],
+	},
+	{
+		path: '**',
+		redirectTo: '',
+	},
 ];

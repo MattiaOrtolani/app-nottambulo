@@ -5,6 +5,7 @@
 ## Motivazione del progetto
 
 Il progetto nasce con l'obiettivo di realizzare un'applicazione distribuita moderna che unisca:
+
 - consultazione pubblica dei locali in sola lettura
 - gestione amministrativa autenticata tramite Keycloak
 - backend API strutturato e pronto per essere esteso
@@ -29,15 +30,10 @@ Il progetto nasce con l'obiettivo di realizzare un'applicazione distribuita mode
 
 ## Avvio rapido
 
-Per semplificare la consegna, la configurazione demo e' centralizzata nel file `.env`.
+Per il deploy Kubernetes i `Secret` demo sono gia inclusi nei manifest YAML del repository.
 
-1. Copia `.env.example` in `.env` se il file non e' gia presente.
-2. Esporta le variabili prima di avviare backend o generare i manifest Kubernetes:
-   `set -a && source .env && set +a`
-3. Avvia i componenti oppure genera i `Secret` Kubernetes dal file `.env`.
+Workflow locale consigliato:
 
-Per i manifest Kubernetes puoi usare lo script:
-`./scripts/render-k8s-secrets.sh`
-
-Oppure applicarli direttamente:
-`./scripts/render-k8s-secrets.sh | kubectl apply -f -`
+1. build immagini locali con `./scripts/build-local-images.sh`
+2. applica i manifest locali con `./scripts/apply-k8s-local.sh`
+3. popola il database con `./scripts/seed-locali.sh`

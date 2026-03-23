@@ -1,6 +1,7 @@
 # Java / Maven
 /target/
 **/target/
+**/.m2/
 **/*.jar
 *.log
 !.mvn/wrapper/maven-wrapper.jar
@@ -9,6 +10,7 @@
 /frontend/node_modules/
 /backend/node_modules/
 **/node_modules/
+**/.angular/
 /dist/
 **/dist/
 npm-debug.log*

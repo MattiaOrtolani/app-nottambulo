@@ -1,181 +1,192 @@
 import { NgIf } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { AuthService } from '../auth/auth.service';
 import { LocaleCardComponent } from '../components/locale-card.component';
 import { LocaleFormComponent } from '../components/locale-form.component';
 import { CreateLocaleRequest, Locale } from '../models/locale.model';
 import { LocaleApiService } from '../services/locale-api.service';
 
 @Component({
-  selector: 'app-admin-locali-page',
-  standalone: true,
-  imports: [NgIf, LocaleFormComponent, LocaleCardComponent],
-  template: `
-    <section class="page admin-grid">
-      <app-locale-form
-        [locale]="selectedLocale()"
-        (save)="handleSave($event)"
-        (cancel)="resetSelection()"
-      ></app-locale-form>
+	selector: 'app-admin-locali-page',
+	standalone: true,
+	imports: [NgIf, LocaleFormComponent, LocaleCardComponent],
+	styleUrl: './admin-locali-page.component.scss',
+	template: `
+		<section class="page admin-layout">
+			<aside class="admin-sidebar panel">
+				<div class="sidebar-head">
+					<p class="brand-mark">Nottambulo</p>
+					<p class="sidebar-kicker">Backoffice</p>
+				</div>
 
-      <section class="admin-list panel">
-        <div class="list-header">
-          <div>
-            <p class="eyebrow">Backoffice</p>
-            <h2>Gestione locali</h2>
-          </div>
-          <button class="ghost-button" (click)="loadLocali()">Aggiorna lista</button>
-        </div>
+				<nav class="sidebar-nav">
+					<a href="#nuovo-locale" class="sidebar-link sidebar-link-active">Nuovo locale</a>
+					<a href="#gestione-locali" class="sidebar-link">Gestione locali</a>
+				</nav>
 
-        <p *ngIf="loading()" class="status status-info">Sto caricando i locali...</p>
-        <p *ngIf="message()" class="status status-success">{{ message() }}</p>
-        <p *ngIf="error()" class="status status-error">{{ error() }}</p>
+				<button class="logout-link" type="button" (click)="logout()">Esci</button>
+			</aside>
 
-        <div class="admin-items" *ngIf="locali().length > 0">
-          @for (locale of locali(); track locale.id) {
-            <div class="admin-item">
-              <app-locale-card [locale]="locale"></app-locale-card>
-              <div class="item-actions">
-                <button class="ghost-button" (click)="editLocale(locale)">Modifica</button>
-                <button class="danger-button" (click)="deleteLocale(locale.id)">Elimina</button>
-              </div>
-            </div>
-          }
-        </div>
-      </section>
-    </section>
-  `,
-  styles: [`
-    .admin-grid {
-      display: grid;
-      gap: 1.5rem;
-      padding-top: 1.5rem;
-      grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
-      align-items: start;
-    }
+			<div class="admin-main">
+				<div class="admin-topbar">
+					<div>
+						<p class="eyebrow">Area riservata</p>
+						<h1>{{ selectedLocale() ? 'Modifica locale' : 'Inserisci locale' }}</h1>
+					</div>
+					<p class="session-label">
+						{{ authService.authenticated() ? 'Admin autenticato' : 'Sessione non attiva' }}
+					</p>
+				</div>
 
-    .admin-list {
-      padding: 1.25rem;
-      display: grid;
-      gap: 1rem;
-    }
+				<section class="stats-grid">
+					<article class="stat-card panel">
+						<p class="stat-label">Totale locali</p>
+						<p class="stat-value">
+							{{ locali().length }}
+							<span>attivi</span>
+						</p>
+					</article>
 
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      align-items: flex-start;
-    }
+					<article class="stat-card panel">
+						<p class="stat-label">Zone coperte</p>
+						<p class="stat-value">
+							{{ coveredAreas() }}
+							<span>quartieri</span>
+						</p>
+					</article>
+				</section>
 
-    .eyebrow,
-    h2 {
-      margin: 0;
-    }
+				<p *ngIf="loading()" class="status status-info">Sto caricando i locali...</p>
+				<p *ngIf="message()" class="status status-success">{{ message() }}</p>
+				<p *ngIf="error()" class="status status-error">{{ error() }}</p>
 
-    .eyebrow {
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.16rem;
-      font-size: 0.74rem;
-    }
+				<app-locale-form
+					[locale]="selectedLocale()"
+					(save)="handleSave($event)"
+					(cancel)="resetSelection()"
+				></app-locale-form>
 
-    .admin-items {
-      display: grid;
-      gap: 1rem;
-    }
+				<section class="admin-list panel" id="gestione-locali">
+					<div class="list-header">
+						<div>
+							<p class="section-kicker">Locali registrati</p>
+							<h2>Gestione locali</h2>
+						</div>
+						<button class="ghost-button" (click)="loadLocali()">Aggiorna lista</button>
+					</div>
 
-    .admin-item {
-      display: grid;
-      gap: 0.8rem;
-    }
+					<div class="admin-items" *ngIf="locali().length > 0">
+						@for (locale of locali(); track locale.id) {
+							<div class="admin-item">
+								<app-locale-card [locale]="locale"></app-locale-card>
+								<div class="item-actions">
+									<button class="ghost-button" (click)="editLocale(locale)">Modifica</button>
+									<button class="danger-button" (click)="deleteLocale(locale.id)">Elimina</button>
+								</div>
+							</div>
+						}
+					</div>
 
-    .item-actions {
-      display: flex;
-      gap: 0.75rem;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 980px) {
-      .admin-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  `]
+					<p *ngIf="!loading() && locali().length === 0" class="status status-info">
+						Nessun locale registrato al momento.
+					</p>
+				</section>
+			</div>
+		</section>
+	`,
 })
 export class AdminLocaliPageComponent {
-  private readonly localeApi = inject(LocaleApiService);
+	private readonly localeApi = inject(LocaleApiService);
+	protected readonly authService = inject(AuthService);
 
-  protected readonly locali = signal<Locale[]>([]);
-  protected readonly selectedLocale = signal<Locale | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly error = signal('');
-  protected readonly message = signal('');
+	protected readonly locali = signal<Locale[]>([]);
+	protected readonly selectedLocale = signal<Locale | null>(null);
+	protected readonly loading = signal(false);
+	protected readonly error = signal('');
+	protected readonly message = signal('');
+	protected readonly coveredAreas = computed(() => {
+		const areas = this.locali()
+			.map((locale) => this.extractArea(locale.descrizione))
+			.filter((area) => area.length > 0);
 
-  constructor() {
-    this.loadLocali();
-  }
+		return new Set(areas).size;
+	});
 
-  protected loadLocali(): void {
-    this.loading.set(true);
-    this.error.set('');
+	constructor() {
+		this.loadLocali();
+	}
 
-    this.localeApi.getAll().subscribe({
-      next: (locali) => {
-        this.locali.set(locali);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Non riesco a leggere l\'elenco locali. Verifica backend e token admin.');
-        this.loading.set(false);
-      }
-    });
-  }
+	protected loadLocali(): void {
+		this.loading.set(true);
+		this.error.set('');
 
-  protected editLocale(locale: Locale): void {
-    this.selectedLocale.set(locale);
-    this.message.set('');
-  }
+		this.localeApi.getAll().subscribe({
+			next: (locali) => {
+				this.locali.set(locali);
+				this.loading.set(false);
+			},
+			error: () => {
+				this.error.set("Non riesco a leggere l'elenco locali. Verifica backend e token admin.");
+				this.loading.set(false);
+			},
+		});
+	}
 
-  protected resetSelection(): void {
-    this.selectedLocale.set(null);
-  }
+	protected editLocale(locale: Locale): void {
+		this.selectedLocale.set(locale);
+		this.message.set('');
+	}
 
-  protected handleSave(payload: CreateLocaleRequest): void {
-    this.error.set('');
-    this.message.set('');
+	protected resetSelection(): void {
+		this.selectedLocale.set(null);
+	}
 
-    const selected = this.selectedLocale();
-    const request$ = selected
-      ? this.localeApi.updateLocale(selected.id, payload)
-      : this.localeApi.createLocale(payload);
+	protected logout(): void {
+		void this.authService.logout();
+	}
 
-    request$.subscribe({
-      next: () => {
-        this.message.set(selected ? 'Locale aggiornato correttamente.' : 'Locale creato correttamente.');
-        this.resetSelection();
-        this.loadLocali();
-      },
-      error: () => {
-        this.error.set('Operazione non riuscita. Controlla validazione e permessi admin.');
-      }
-    });
-  }
+	protected handleSave(payload: CreateLocaleRequest): void {
+		this.error.set('');
+		this.message.set('');
 
-  protected deleteLocale(id: number): void {
-    this.error.set('');
-    this.message.set('');
+		const selected = this.selectedLocale();
+		const request$ = selected
+			? this.localeApi.updateLocale(selected.id, payload)
+			: this.localeApi.createLocale(payload);
 
-    this.localeApi.deleteLocale(id).subscribe({
-      next: () => {
-        this.message.set('Locale eliminato correttamente.');
-        if (this.selectedLocale()?.id === id) {
-          this.resetSelection();
-        }
-        this.loadLocali();
-      },
-      error: () => {
-        this.error.set('Eliminazione non riuscita. Controlla i permessi admin.');
-      }
-    });
-  }
+		request$.subscribe({
+			next: () => {
+				this.message.set(
+					selected ? 'Locale aggiornato correttamente.' : 'Locale creato correttamente.',
+				);
+				this.resetSelection();
+				this.loadLocali();
+			},
+			error: () => {
+				this.error.set('Operazione non riuscita. Controlla validazione e permessi admin.');
+			},
+		});
+	}
+
+	protected deleteLocale(id: number): void {
+		this.error.set('');
+		this.message.set('');
+
+		this.localeApi.deleteLocale(id).subscribe({
+			next: () => {
+				this.message.set('Locale eliminato correttamente.');
+				if (this.selectedLocale()?.id === id) {
+					this.resetSelection();
+				}
+				this.loadLocali();
+			},
+			error: () => {
+				this.error.set('Eliminazione non riuscita. Controlla i permessi admin.');
+			},
+		});
+	}
+
+	private extractArea(description: string): string {
+		return description.split(/[,.]/)[0].trim().toLowerCase();
+	}
 }

@@ -10,6 +10,7 @@
 ## Responsabilita'
 
 Il frontend offre due aree principali:
+
 - area pubblica per la ricerca dei locali vicini
 - area amministrativa per creare, modificare ed eliminare locali
 
@@ -42,6 +43,7 @@ Il frontend offre due aree principali:
 ## Routing
 
 Rotte previste:
+
 - `/`
 - `/nearby`
 - `/login`
@@ -51,6 +53,7 @@ Rotte previste:
 ## Integrazione backend
 
 Il service frontend chiama il backend tramite:
+
 - `getNearby(lat, lon)`
 - `getAll()`
 - `getById(id)`
@@ -61,6 +64,7 @@ Il service frontend chiama il backend tramite:
 ## Integrazione Keycloak
 
 L'autenticazione e' gestita con:
+
 - un servizio `AuthService` per inizializzazione, login, logout e refresh token
 - una `adminGuard` per proteggere le rotte admin
 - un interceptor HTTP per allegare il bearer token alle chiamate protette
@@ -68,10 +72,12 @@ L'autenticazione e' gestita con:
 ## Configurazione
 
 File principali:
+
 - `frontend/src/environments/environment.ts`
 - `frontend/src/environments/environment.development.ts`
 
 Valori da configurare:
+
 - URL backend
 - URL Keycloak
 - realm

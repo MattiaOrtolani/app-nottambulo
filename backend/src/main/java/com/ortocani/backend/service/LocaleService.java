@@ -2,6 +2,7 @@ package com.ortocani.backend.service;
 
 import com.ortocani.backend.dto.CreateLocaleRequest;
 import com.ortocani.backend.dto.LocaleResponse;
+import com.ortocani.backend.dto.NearbyLocaleResponse;
 import com.ortocani.backend.dto.UpdateLocaleRequest;
 import com.ortocani.backend.entity.LocaleEntity;
 import com.ortocani.backend.exception.ResourceNotFoundException;
@@ -53,11 +54,11 @@ public class LocaleService {
     }
 
     @Transactional(readOnly = true)
-    public List<LocaleResponse> findNearby(double latitude, double longitude) {
+    public List<NearbyLocaleResponse> findNearby(double latitude, double longitude, int limit) {
         return localeRepository.findAll().stream()
-                .map(entity -> toResponse(entity, haversine(latitude, longitude, entity.getLatitudine(), entity.getLongitudine())))
-                .sorted(Comparator.comparing(LocaleResponse::distanzaKm))
-                .limit(10)
+                .map(entity -> toNearbyResponse(entity, haversine(latitude, longitude, entity.getLatitudine(), entity.getLongitudine())))
+                .sorted(Comparator.comparing(NearbyLocaleResponse::distanzaKm))
+                .limit(limit)
                 .toList();
     }
 
@@ -80,6 +81,17 @@ public class LocaleService {
                 entity.getId(),
                 entity.getNome(),
                 entity.getDescrizione(),
+                entity.getLatitudine(),
+                entity.getLongitudine(),
+                entity.getTipo(),
+                distanzaKm == null ? null : Math.round(distanzaKm * 100.0d) / 100.0d
+        );
+    }
+
+    private NearbyLocaleResponse toNearbyResponse(LocaleEntity entity, Double distanzaKm) {
+        return new NearbyLocaleResponse(
+                entity.getId(),
+                entity.getNome(),
                 entity.getLatitudine(),
                 entity.getLongitudine(),
                 entity.getTipo(),

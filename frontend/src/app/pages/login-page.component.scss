@@ -1,0 +1,30 @@
+.login-page {
+	padding-top: 2rem;
+}
+
+.login-card {
+	max-width: 720px;
+	margin: 0 auto;
+	padding: 1.8rem;
+	display: grid;
+	gap: 1rem;
+}
+
+.eyebrow,
+h1,
+p {
+	margin: 0;
+}
+
+.eyebrow {
+	color: var(--accent);
+	text-transform: uppercase;
+	letter-spacing: 0.16rem;
+	font-size: 0.74rem;
+}
+
+.actions {
+	display: flex;
+	gap: 0.8rem;
+	flex-wrap: wrap;
+}

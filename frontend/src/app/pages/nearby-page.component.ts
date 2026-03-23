@@ -1,135 +1,554 @@
-import { NgIf } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
-import { LocaleCardComponent } from '../components/locale-card.component';
-import { LocaleSearchFormComponent } from '../components/locale-search-form.component';
-import { Locale } from '../models/locale.model';
+import { DecimalPipe, NgIf } from '@angular/common';
+import {
+	AfterViewInit,
+	Component,
+	ElementRef,
+	OnDestroy,
+	ViewChild,
+	computed,
+	effect,
+	inject,
+	signal,
+} from '@angular/core';
+import * as L from 'leaflet';
+import { Locale, LocaleType, NearbyLocale } from '../models/locale.model';
 import { LocaleApiService } from '../services/locale-api.service';
 
+type MapFilter = 'ALL' | 'CLUB' | 'BAR' | 'JAZZ' | 'LOUNGE';
+
+const CARTO_DARK_MATTER_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+const DEFAULT_POSITION = {
+	lat: 45.4642,
+	lon: 9.19,
+};
+
+const RESULTS_STEP = 10;
+
 @Component({
-  selector: 'app-nearby-page',
-  standalone: true,
-  imports: [NgIf, LocaleCardComponent, LocaleSearchFormComponent],
-  template: `
-    <section class="page page-grid">
-      <section class="hero panel">
-        <p class="eyebrow">Ricerca pubblica</p>
-        <h1>Scopri i locali notturni piu vicini alla tua posizione.</h1>
-        <p class="lead">
-          Cerca i primi 10 locali ordinati per distanza crescente e consulta i dettagli senza autenticazione.
-        </p>
-        <app-locale-search-form (search)="searchNearby($event.latitudine, $event.longitudine)"></app-locale-search-form>
-      </section>
+	selector: 'app-nearby-page',
+	standalone: true,
+	imports: [NgIf, DecimalPipe],
+	styleUrl: './nearby-page.component.scss',
+	template: `
+		<section class="map-page">
+			<aside class="map-sidebar">
+				<div class="sidebar-search">
+					<input
+						type="search"
+						placeholder="Cerca locale o zona..."
+						[value]="searchTerm()"
+						(input)="handleSearchInput($event)"
+					/>
+				</div>
 
-      <section class="results">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Risultati</p>
-            <h2>Top 10 nelle vicinanze</h2>
-          </div>
-          <span class="counter">{{ locali().length }} trovati</span>
-        </div>
+				<div class="filter-row">
+					@for (filter of filters; track filter) {
+						<button
+							type="button"
+							class="filter-chip"
+							[class.filter-chip-active]="activeFilter() === filter"
+							(click)="setActiveFilter(filter)"
+						>
+							{{ getFilterLabel(filter) }}
+						</button>
+					}
+				</div>
 
-        <p *ngIf="loading()" class="status status-info">Sto cercando i locali piu vicini...</p>
-        <p *ngIf="error()" class="status status-error">{{ error() }}</p>
+				<div class="sidebar-divider"></div>
 
-        <div class="result-grid" *ngIf="locali().length > 0">
-          @for (locale of locali(); track locale.id) {
-            <app-locale-card [locale]="locale"></app-locale-card>
-          }
-        </div>
+				<p *ngIf="loading()" class="status status-info">Sto caricando la mappa dei locali...</p>
+				<p *ngIf="error()" class="status status-error">{{ error() }}</p>
 
-        <p *ngIf="!loading() && !error() && locali().length === 0" class="status status-info">
-          Nessun risultato al momento. Inserisci coordinate valide per avviare la ricerca.
-        </p>
-      </section>
-    </section>
-  `,
-  styles: [`
-    .page-grid {
-      display: grid;
-      gap: 1.5rem;
-      padding-top: 1.5rem;
-    }
+				<div class="sidebar-results">
+					<div class="sidebar-list">
+						@for (locale of filteredLocales(); track locale.id) {
+							<button
+								type="button"
+								class="locale-row"
+								[class.locale-row-active]="activeLocale()?.id === locale.id"
+								(click)="selectLocale(locale)"
+							>
+								<div class="locale-row-head">
+									<h2>{{ locale.nome }}</h2>
+									<span
+										*ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined"
+										class="locale-distance"
+									>
+										{{ locale.distanzaKm | number: '1.1-1' }} km
+									</span>
+								</div>
 
-    .hero {
-      padding: 1.6rem;
-      display: grid;
-      gap: 1rem;
-    }
+								<p class="locale-meta">{{ getSidebarMeta(locale) }}</p>
+								<p *ngIf="getSidebarCopy(locale)" class="locale-copy">{{ getSidebarCopy(locale) }}</p>
+							</button>
+						}
+					</div>
 
-    .eyebrow {
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 0.18rem;
-      font-size: 0.74rem;
-      color: var(--muted);
-    }
+					<button
+						*ngIf="showExtendSearchButton()"
+						type="button"
+						class="extend-search-button"
+						(click)="extendSearch()"
+					>
+						Estendi ricerca
+					</button>
+				</div>
 
-    h1,
-    h2,
-    .lead {
-      margin: 0;
-    }
+				<p *ngIf="!loading() && !error() && filteredLocales().length === 0" class="status status-info">
+					Nessun locale vicino disponibile in questo momento.
+				</p>
+			</aside>
 
-    h1 {
-      max-width: 12ch;
-      font-size: clamp(2.2rem, 5vw, 4.6rem);
-      line-height: 0.96;
-    }
+			<section class="map-stage">
+				<div class="map-toolbar">
+					<button type="button" class="map-tool" (click)="zoomIn()">+</button>
+					<button type="button" class="map-tool" (click)="zoomOut()">−</button>
+					<button type="button" class="map-tool" (click)="centerOnUser()">⌖</button>
+				</div>
 
-    .lead {
-      max-width: 52rem;
-      color: var(--muted);
-      font-size: 1.05rem;
-    }
+				<div class="map-surface">
+					<div #mapHost class="osm-map-host" aria-label="Mappa OpenStreetMap con tema dark"></div>
 
-    .results {
-      display: grid;
-      gap: 1rem;
-    }
+					<article class="map-detail" *ngIf="activeLocale() as locale">
+						<div class="map-detail-icon">{{ getTypeBadge(locale.tipo) }}</div>
 
-    .section-heading {
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      align-items: end;
-    }
+						<div class="map-detail-copy">
+							<h3>{{ locale.nome }}</h3>
+							<p>
+								{{ getSelectedAddress(locale) }}
+								<span *ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined">
+									• {{ locale.distanzaKm | number: '1.1-1' }} km da te
+								</span>
+							</p>
 
-    .counter {
-      color: var(--muted);
-    }
-
-    .result-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-    }
-  `]
+							<div class="map-detail-tags">
+								<span class="detail-tag detail-tag-accent">{{ getBottomTypeLabel(locale.tipo) }}</span>
+								<span class="detail-tag detail-tag-primary">Aperto ora</span>
+							</div>
+						</div>
+					</article>
+				</div>
+			</section>
+		</section>
+	`,
 })
-export class NearbyPageComponent {
-  private readonly localeApi = inject(LocaleApiService);
+export class NearbyPageComponent implements AfterViewInit, OnDestroy {
+	@ViewChild('mapHost', { static: true }) private mapHost?: ElementRef<HTMLDivElement>;
 
-  protected readonly locali = signal<Locale[]>([]);
-  protected readonly loading = signal(false);
-  protected readonly error = signal('');
+	private readonly localeApi = inject(LocaleApiService);
 
-  constructor() {
-    this.searchNearby(45.4642, 9.19);
-  }
+	private leaflet: any;
+	private map: any;
+	private localeMarkersLayer: any;
+	private userMarker: any;
 
-  protected searchNearby(lat: number, lon: number): void {
-    this.loading.set(true);
-    this.error.set('');
+	protected readonly filters: MapFilter[] = ['ALL', 'CLUB', 'BAR', 'JAZZ', 'LOUNGE'];
+	protected readonly locali = signal<NearbyLocale[]>([]);
+	protected readonly loading = signal(false);
+	protected readonly error = signal('');
+	protected readonly searchTerm = signal('');
+	protected readonly activeFilter = signal<MapFilter>('ALL');
+	protected readonly selectedLocaleId = signal<number | null>(null);
+	protected readonly currentPosition = signal(DEFAULT_POSITION);
+	protected readonly selectedLocaleDetail = signal<Locale | null>(null);
+	protected readonly nearbyLimit = signal(RESULTS_STEP);
+	private readonly mapReady = signal(false);
+	private readonly detailsVersion = signal(0);
+	private readonly localeDetailsCache = new Map<number, Locale>();
 
-    this.localeApi.getNearby(lat, lon).subscribe({
-      next: (locali) => {
-        this.locali.set(locali);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Non riesco a recuperare i locali vicini. Controlla backend e coordinate.');
-        this.loading.set(false);
-      }
-    });
-  }
+	protected readonly filteredLocales = computed(() => {
+		const filter = this.activeFilter();
+		const term = this.searchTerm().trim().toLowerCase();
+
+		return this.locali().filter((locale) => {
+			const matchesFilter = filter === 'ALL' || this.mapFilterForLocale(locale) === filter;
+			const matchesText =
+				term.length === 0 ||
+				locale.nome.toLowerCase().includes(term) ||
+				this.getSidebarMeta(locale).toLowerCase().includes(term) ||
+				this.getSidebarCopy(locale).toLowerCase().includes(term);
+
+			return matchesFilter && matchesText;
+		});
+	});
+
+	protected readonly activeLocale = computed(() => {
+		const selectedId = this.selectedLocaleId();
+		if (selectedId === null) {
+			return null;
+		}
+
+		return this.filteredLocales().find((locale) => locale.id === selectedId) ?? null;
+	});
+
+	protected readonly showExtendSearchButton = computed(
+		() => !this.loading() && !this.error() && this.locali().length >= this.nearbyLimit(),
+	);
+
+	private readonly syncMapEffect = effect(() => {
+		const ready = this.mapReady();
+		const locales = this.filteredLocales();
+		const active = this.activeLocale();
+		const position = this.currentPosition();
+
+		if (!ready) {
+			return;
+		}
+
+		this.renderUserMarker(position.lat, position.lon);
+		this.renderLocaleMarkers(locales, active);
+	});
+
+	constructor() {
+		this.searchNearby(DEFAULT_POSITION.lat, DEFAULT_POSITION.lon);
+	}
+
+	async ngAfterViewInit(): Promise<void> {
+		await this.initializeMap();
+		this.requestUserPosition();
+	}
+
+	ngOnDestroy(): void {
+		this.map?.remove();
+	}
+
+	protected handleSearchInput(event: Event): void {
+		const target = event.target as HTMLInputElement;
+		this.searchTerm.set(target.value);
+		this.syncSelectionWithFilteredLocales();
+	}
+
+	protected setActiveFilter(filter: MapFilter): void {
+		this.activeFilter.set(filter);
+		this.syncSelectionWithFilteredLocales();
+	}
+
+	protected zoomIn(): void {
+		this.map?.zoomIn();
+	}
+
+	protected zoomOut(): void {
+		this.map?.zoomOut();
+	}
+
+	protected extendSearch(): void {
+		const nextLimit = this.nearbyLimit() + RESULTS_STEP;
+		this.nearbyLimit.set(nextLimit);
+		const { lat, lon } = this.currentPosition();
+		this.searchNearby(lat, lon, nextLimit);
+	}
+
+	protected centerOnUser(): void {
+		if (!this.map) {
+			return;
+		}
+
+		const { lat, lon } = this.currentPosition();
+		this.map.flyTo([lat, lon], Math.max(this.map.getZoom(), 14), {
+			animate: true,
+			duration: 0.6,
+		});
+	}
+
+	protected searchNearby(lat: number, lon: number, limit = this.nearbyLimit()): void {
+		this.loading.set(true);
+		this.error.set('');
+
+		this.localeApi.getNearby(lat, lon, limit).subscribe({
+			next: (locali) => {
+				this.locali.set(locali);
+				this.syncSelectionWithFilteredLocales();
+				this.loading.set(false);
+			},
+			error: () => {
+				this.locali.set([]);
+				this.selectedLocaleId.set(null);
+				this.selectedLocaleDetail.set(null);
+				this.error.set('Non riesco a recuperare i locali vicini dal backend.');
+				this.loading.set(false);
+			},
+		});
+	}
+
+	protected selectLocale(locale: NearbyLocale): void {
+		this.selectedLocaleId.set(locale.id);
+		this.loadLocaleDetail(locale.id);
+
+		if (this.map) {
+			this.map.flyTo([locale.latitudine, locale.longitudine], Math.max(this.map.getZoom(), 14), {
+				animate: true,
+				duration: 0.55,
+			});
+		}
+	}
+
+	protected getFilterLabel(filter: MapFilter): string {
+		const labels: Record<MapFilter, string> = {
+			ALL: 'Tutti',
+			CLUB: 'Club',
+			BAR: 'Bar',
+			JAZZ: 'Jazz',
+			LOUNGE: 'Lounge',
+		};
+
+		return labels[filter];
+	}
+
+	protected getTypeLabel(type: LocaleType): string {
+		const labels: Record<LocaleType, string> = {
+			DISCOTECA: 'Club',
+			PUB: 'Bar',
+			BAR: 'Jazz Bar',
+			LOUNGE: 'Cocktail Bar',
+			LIVE_CLUB: 'Club',
+		};
+
+		return labels[type];
+	}
+
+	protected getBottomTypeLabel(type: LocaleType): string {
+		const labels: Record<LocaleType, string> = {
+			DISCOTECA: 'Club',
+			PUB: 'Bar',
+			BAR: 'Club',
+			LOUNGE: 'Club',
+			LIVE_CLUB: 'Club',
+		};
+
+		return labels[type];
+	}
+
+	protected getTypeBadge(type: LocaleType): string {
+		const labels: Record<LocaleType, string> = {
+			DISCOTECA: 'CL',
+			PUB: 'BR',
+			BAR: 'JZ',
+			LOUNGE: 'LG',
+			LIVE_CLUB: 'CL',
+		};
+
+		return labels[type];
+	}
+
+	protected getSidebarMeta(locale: NearbyLocale): string {
+		this.detailsVersion();
+		const detail = this.localeDetailsCache.get(locale.id);
+		const address = detail ? this.extractAddress(detail.descrizione) : null;
+		return address
+			? `${this.getTypeLabel(locale.tipo)} • ${address}`
+			: this.getTypeLabel(locale.tipo);
+	}
+
+	protected getSidebarCopy(locale: NearbyLocale): string {
+		this.detailsVersion();
+		const detail = this.localeDetailsCache.get(locale.id);
+		if (!detail) {
+			return '';
+		}
+
+		return this.extractDescription(detail.descrizione);
+	}
+
+	protected getSelectedAddress(locale: NearbyLocale): string {
+		const detail = this.selectedLocaleDetail();
+		if (detail && detail.id === locale.id) {
+			return this.extractAddress(detail.descrizione);
+		}
+
+		return 'Caricamento dettagli...';
+	}
+
+	private async initializeMap(): Promise<void> {
+		if (!this.mapHost) {
+			return;
+		}
+
+		try {
+			this.leaflet = L;
+
+			this.map = L.map(this.mapHost.nativeElement, {
+				center: [DEFAULT_POSITION.lat, DEFAULT_POSITION.lon],
+				zoom: 13,
+				zoomControl: false,
+				attributionControl: false,
+			});
+
+			L.tileLayer(CARTO_DARK_MATTER_URL, {
+				subdomains: 'abcd',
+				maxZoom: 20,
+			}).addTo(this.map);
+
+			L.control
+				.attribution({
+					position: 'bottomright',
+					prefix: false,
+				})
+				.addAttribution('&copy; OpenStreetMap &copy; CARTO')
+				.addTo(this.map);
+
+			this.localeMarkersLayer = L.layerGroup().addTo(this.map);
+			this.mapReady.set(true);
+
+			setTimeout(() => {
+				this.map?.invalidateSize();
+			}, 0);
+		} catch (error) {
+			console.error('Leaflet initialization failed', error);
+			this.error.set('Non riesco a inizializzare la mappa.');
+		}
+	}
+
+	private requestUserPosition(): void {
+		if (!('geolocation' in navigator)) {
+			return;
+		}
+
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const nextPosition = {
+					lat: position.coords.latitude,
+					lon: position.coords.longitude,
+				};
+
+				this.currentPosition.set(nextPosition);
+				this.centerOnUser();
+				this.searchNearby(nextPosition.lat, nextPosition.lon);
+			},
+			() => {
+				this.centerOnUser();
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 60000,
+			},
+		);
+	}
+
+	private renderUserMarker(lat: number, lon: number): void {
+		if (!this.map || !this.leaflet) {
+			return;
+		}
+
+		this.userMarker?.remove();
+
+		this.userMarker = this.leaflet.marker([lat, lon], {
+			interactive: false,
+			zIndexOffset: 1000,
+			icon: this.leaflet.divIcon({
+				className: '',
+				html: '<span class="leaflet-user-marker"></span>',
+				iconSize: [24, 24],
+				iconAnchor: [12, 12],
+			}),
+		});
+
+		this.userMarker.addTo(this.map);
+	}
+
+	private renderLocaleMarkers(locales: NearbyLocale[], activeLocale: NearbyLocale | null): void {
+		if (!this.localeMarkersLayer || !this.leaflet) {
+			return;
+		}
+
+		this.localeMarkersLayer.clearLayers();
+
+		locales.forEach((locale) => {
+			const isActive = activeLocale?.id === locale.id;
+
+			const marker = this.leaflet.marker([locale.latitudine, locale.longitudine], {
+				keyboard: false,
+				zIndexOffset: isActive ? 900 : 100,
+				icon: this.leaflet.divIcon({
+					className: isActive
+						? 'leaflet-locale-marker leaflet-locale-marker-active'
+						: 'leaflet-locale-marker',
+					html: `
+						<span class="leaflet-locale-marker-shell">
+							${isActive ? `<span class="leaflet-locale-label">${this.escapeHtml(locale.nome)}</span>` : ''}
+							<span class="leaflet-locale-dot"></span>
+							${isActive ? '<span class="leaflet-locale-stem"></span>' : ''}
+						</span>
+          `,
+					iconSize: isActive ? [160, 62] : [20, 20],
+					iconAnchor: isActive ? [80, 62] : [10, 10],
+				}),
+			});
+
+			marker.on('click', () => this.selectLocale(locale));
+			marker.addTo(this.localeMarkersLayer);
+		});
+	}
+
+	private mapFilterForLocale(locale: Pick<NearbyLocale, 'tipo'>): MapFilter {
+		switch (locale.tipo) {
+			case 'DISCOTECA':
+			case 'LIVE_CLUB':
+				return 'CLUB';
+			case 'LOUNGE':
+				return 'LOUNGE';
+			case 'BAR':
+				return 'JAZZ';
+			default:
+				return 'BAR';
+		}
+	}
+
+	private syncSelectionWithFilteredLocales(): void {
+		const selectedId = this.selectedLocaleId();
+		const stillVisible = this.filteredLocales().some((locale) => locale.id === selectedId);
+
+		if (!selectedId || !stillVisible) {
+			this.selectedLocaleId.set(null);
+			this.selectedLocaleDetail.set(null);
+			if (!stillVisible) {
+				this.localeMarkersLayer?.clearLayers();
+				this.renderLocaleMarkers(this.filteredLocales(), null);
+			}
+		}
+	}
+
+	private extractAddress(description: string): string {
+		return description.split('.')[0].trim() || 'Milano';
+	}
+
+	private extractDescription(description: string): string {
+		const pieces = description.split('.');
+		return pieces.slice(1).join('.').trim() || description;
+	}
+
+	private escapeHtml(value: string): string {
+		return value
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;')
+			.replaceAll('"', '&quot;')
+			.replaceAll("'", '&#39;');
+	}
+
+	private loadLocaleDetail(id: number): void {
+		const cachedDetail = this.localeDetailsCache.get(id);
+		if (cachedDetail) {
+			this.selectedLocaleDetail.set(cachedDetail);
+			return;
+		}
+
+		this.selectedLocaleDetail.set(null);
+
+		this.localeApi.getById(id).subscribe({
+			next: (detail) => {
+				this.localeDetailsCache.set(detail.id, detail);
+				this.detailsVersion.update((version) => version + 1);
+				if (this.selectedLocaleId() === detail.id) {
+					this.selectedLocaleDetail.set(detail);
+				}
+			},
+			error: () => {
+				if (this.selectedLocaleId() === id) {
+					this.selectedLocaleDetail.set(null);
+				}
+			},
+		});
+	}
 }

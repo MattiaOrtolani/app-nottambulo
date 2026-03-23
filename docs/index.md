@@ -24,6 +24,7 @@ Il repository e' organizzato come monorepo:
 ## Obiettivo applicativo
 
 L'applicazione permette di:
+
 - cercare i locali notturni vicini a una posizione GPS
 - mostrare i primi 10 risultati ordinati per distanza
 - gestire i locali tramite un'area amministrativa protetta

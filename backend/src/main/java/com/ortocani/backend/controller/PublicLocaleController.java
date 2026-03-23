@@ -1,9 +1,12 @@
 package com.ortocani.backend.controller;
 
 import com.ortocani.backend.dto.LocaleResponse;
+import com.ortocani.backend.dto.NearbyLocaleResponse;
 import com.ortocani.backend.service.LocaleService;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import org.springframework.validation.annotation.Validated;
@@ -35,7 +38,7 @@ public class PublicLocaleController {
     }
 
     @GetMapping("/nearby")
-    public List<LocaleResponse> getNearby(
+    public List<NearbyLocaleResponse> getNearby(
             @RequestParam("lat")
             @NotNull(message = "La latitudine e' obbligatoria")
             @DecimalMin(value = "-90.0", message = "Latitudine non valida")
@@ -45,8 +48,12 @@ public class PublicLocaleController {
             @NotNull(message = "La longitudine e' obbligatoria")
             @DecimalMin(value = "-180.0", message = "Longitudine non valida")
             @DecimalMax(value = "180.0", message = "Longitudine non valida")
-            Double longitudine
+            Double longitudine,
+            @RequestParam(name = "limit", defaultValue = "10")
+            @Min(value = 1, message = "Il limite minimo e' 1")
+            @Max(value = 300, message = "Il limite massimo e' 300")
+            Integer limit
     ) {
-        return localeService.findNearby(latitudine, longitudine);
+        return localeService.findNearby(latitudine, longitudine, limit);
     }
 }
