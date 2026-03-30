@@ -1,0 +1,131 @@
+		<section class="map-page">
+			<div
+				class="map-sidebar-backdrop"
+				*ngIf="mobileMenuService.menuOpen()"
+				(click)="mobileMenuService.close()"
+				aria-hidden="true"
+			></div>
+
+			<aside class="map-sidebar" [class.sidebar-open]="mobileMenuService.menuOpen()">
+				<nav class="mobile-nav-links" aria-label="Navigazione principale">
+					<a
+						*ngFor="let link of navLinks"
+						[routerLink]="link.path"
+						routerLinkActive="active"
+						[routerLinkActiveOptions]="link.exact ? exactOptions : looseOptions"
+						(click)="mobileMenuService.close()"
+					>
+						{{ link.label }}
+					</a>
+				</nav>
+				<div class="sidebar-search">
+					<input
+						type="search"
+						placeholder="Cerca locale o zona..."
+						[value]="searchTerm()"
+						(input)="handleSearchInput($event)"
+					/>
+				</div>
+
+				<div class="filter-row">
+					@for (filter of filters; track filter) {
+						<button
+							type="button"
+							class="filter-chip"
+							[class.filter-chip-active]="activeFilter() === filter"
+							(click)="setActiveFilter(filter)"
+						>
+							{{ getFilterLabel(filter) }}
+						</button>
+					}
+				</div>
+
+				<div class="sidebar-divider"></div>
+
+				<p *ngIf="loading()" class="status status-info">Sto caricando la mappa dei locali...</p>
+				<p *ngIf="error()" class="status status-error">{{ error() }}</p>
+
+				<div class="sidebar-results">
+					<div class="sidebar-list">
+						@for (locale of filteredLocales(); track locale.id) {
+							<button
+								type="button"
+								class="locale-row"
+								[class.locale-row-active]="activeLocale()?.id === locale.id"
+								(click)="selectLocale(locale)"
+							>
+								<div class="locale-row-head">
+									<h2>{{ locale.nome }}</h2>
+									<span
+										*ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined"
+										class="locale-distance"
+									>
+										{{ locale.distanzaKm | number: '1.1-1' }} km
+									</span>
+								</div>
+
+								<p class="locale-meta">{{ getSidebarMeta(locale) }}</p>
+								<p *ngIf="getSidebarCopy(locale)" class="locale-copy">{{ getSidebarCopy(locale) }}</p>
+							</button>
+						}
+					</div>
+
+					<button
+						*ngIf="showExtendSearchButton()"
+						type="button"
+						class="extend-search-button"
+						(click)="extendSearch()"
+					>
+						Estendi ricerca
+					</button>
+				</div>
+
+				<p *ngIf="!loading() && !error() && filteredLocales().length === 0" class="status status-info">
+					Nessun locale vicino disponibile in questo momento.
+				</p>
+			</aside>
+
+			<section class="map-stage">
+				<button
+					type="button"
+					class="map-menu-button"
+					[class.map-menu-button-open]="mobileMenuService.menuOpen()"
+					(click)="mobileMenuService.toggle()"
+					[attr.aria-expanded]="mobileMenuService.menuOpen()"
+					aria-label="Apri menu e risultati"
+				>
+					<span></span>
+					<span></span>
+					<span></span>
+				</button>
+
+				<div class="map-toolbar">
+					<button type="button" class="map-tool" (click)="zoomIn()">+</button>
+					<button type="button" class="map-tool" (click)="zoomOut()">−</button>
+					<button type="button" class="map-tool" (click)="centerOnUser()">⌖</button>
+				</div>
+
+				<div class="map-surface">
+					<div #mapHost class="osm-map-host" aria-label="Mappa OpenStreetMap con tema dark"></div>
+
+					<article class="map-detail" *ngIf="activeLocale() as locale">
+						<div class="map-detail-icon">{{ getTypeBadge(locale.tipo) }}</div>
+
+						<div class="map-detail-copy">
+							<h3>{{ locale.nome }}</h3>
+							<p>
+								{{ getSelectedAddress(locale) }}
+								<span *ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined">
+									• {{ locale.distanzaKm | number: '1.1-1' }} km da te
+								</span>
+							</p>
+
+							<div class="map-detail-tags">
+								<span class="detail-tag detail-tag-accent">{{ getBottomTypeLabel(locale.tipo) }}</span>
+								<span class="detail-tag detail-tag-primary">Aperto ora</span>
+							</div>
+						</div>
+					</article>
+				</div>
+			</section>
+		</section>

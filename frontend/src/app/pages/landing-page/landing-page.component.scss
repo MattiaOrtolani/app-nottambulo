@@ -1,0 +1,248 @@
+.landing {
+	display: grid;
+	gap: 4.5rem;
+	--shell-header-height: 4.6rem;
+	--landing-top-padding: 4rem;
+	padding-top: var(--landing-top-padding);
+	padding-bottom: 4rem;
+	position: relative;
+	z-index: 0;
+	isolation: isolate;
+}
+
+.landing::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 100vw;
+	height: calc(100dvh + var(--landing-top-padding));
+	transform: translateX(-50%);
+	background-image: url('/background.svg');
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	z-index: -2;
+	pointer-events: none;
+}
+
+.landing::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: 100vw;
+	height: calc(100dvh + var(--landing-top-padding));
+	transform: translateX(-50%);
+	background: linear-gradient(
+		to bottom,
+		rgba(8, 8, 9, 0.98) 0%,
+		rgba(8, 8, 9, 0.35) 18%,
+		rgba(8, 8, 9, 0) 38%,
+		rgba(8, 8, 9, 0) 66%,
+		rgba(8, 8, 9, 0.55) 82%,
+		rgba(8, 8, 9, 1) 100%
+	);
+	z-index: -1;
+	pointer-events: none;
+}
+
+.hero {
+	display: grid;
+	gap: clamp(1.6rem, 3.8vw, 2.6rem);
+	grid-template-columns: minmax(0, 1.2fr) minmax(320px, 420px);
+	align-items: center;
+	min-height: calc(100dvh - var(--shell-header-height) - var(--landing-top-padding));
+	padding-block: 0.75rem;
+}
+
+.hero-copy {
+	display: grid;
+	gap: 1.15rem;
+	padding-top: 0.5rem;
+	max-width: 42rem;
+}
+
+.location-pill,
+.eyebrow,
+.lead,
+.info-index {
+	margin: 0;
+}
+
+.location-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
+	width: fit-content;
+	padding: 0.85rem 1.25rem;
+	border-radius: 999px;
+	color: var(--accent);
+	background: rgba(255, 177, 26, 0.12);
+	border: 1px solid rgba(255, 177, 26, 0.28);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.location-dot {
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 999px;
+	background: var(--accent);
+	box-shadow: 0 0 18px rgba(255, 177, 26, 0.55);
+}
+
+.eyebrow,
+.info-index {
+	color: var(--accent);
+	text-transform: uppercase;
+	letter-spacing: 0.34rem;
+	font-size: 0.78rem;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+}
+
+h1 {
+	max-width: 11ch;
+	font-family: var(--font-display);
+	font-size: clamp(4rem, 9.4vw, 6.9rem);
+	line-height: 0.88;
+	text-transform: uppercase;
+	color: var(--text);
+	letter-spacing: 0.02em;
+}
+
+h1 span {
+	color: var(--accent);
+}
+
+.lead {
+	max-width: 34rem;
+	color: var(--muted);
+	font-size: 1.15rem;
+	line-height: 1.7;
+}
+
+.hero-actions {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+	padding-top: 0.55rem;
+}
+
+.primary-link,
+.secondary-link {
+	min-width: 15rem;
+	justify-content: center;
+	text-align: center;
+}
+
+.map-image {
+	width: min(100%, 420px);
+	height: clamp(16rem, 34vh, 18.5rem);
+	display: block;
+	margin-top: 0.75rem;
+	align-self: center;
+	object-fit: cover;
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	opacity: 0.95;
+	filter: saturate(0.95) contrast(1.05);
+}
+
+.info-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.15rem;
+}
+
+.info-card {
+	padding: 1.5rem;
+	display: grid;
+	gap: 0.85rem;
+	min-height: 13rem;
+	align-content: start;
+}
+
+.info-card p:last-child {
+	margin: 0;
+	color: var(--muted);
+	line-height: 1.65;
+}
+
+@media (max-width: 1180px) {
+	.hero {
+		grid-template-columns: 1fr;
+	}
+
+	.map-image {
+		margin-top: 0;
+		max-width: 32rem;
+	}
+}
+
+@media (max-width: 920px) {
+	.info-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 720px) {
+	.landing {
+		gap: 3rem;
+		--landing-top-padding: 2.2rem;
+	}
+
+	h1 {
+		font-size: clamp(3.8rem, 24vw, 5.4rem);
+	}
+
+	.lead {
+		font-size: 1rem;
+	}
+
+	.hero-actions {
+		display: grid;
+		grid-template-columns: 1fr;
+	}
+
+	.primary-link,
+	.secondary-link {
+		min-width: 0;
+	}
+
+	.map-image {
+		min-height: 16rem;
+	}
+}
+
+@media (max-height: 760px) and (min-width: 900px) {
+	.hero {
+		padding-block: 0.35rem;
+	}
+
+	.hero-copy {
+		gap: 0.95rem;
+	}
+
+	.location-pill {
+		padding: 0.7rem 1.1rem;
+	}
+
+	h1 {
+		font-size: clamp(3.6rem, 8.4vw, 6.2rem);
+	}
+
+	.lead {
+		font-size: 1.05rem;
+		line-height: 1.6;
+	}
+
+	.map-image {
+		height: clamp(14.5rem, 30vh, 16.5rem);
+	}
+}

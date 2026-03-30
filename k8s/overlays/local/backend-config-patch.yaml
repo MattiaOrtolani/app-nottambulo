@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: backend-config
+ namespace: app-nottambulo
+data:
+ keycloak.auth-url: http://localhost:8081/realms/app-nottambulo

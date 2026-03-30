@@ -6,21 +6,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 	standalone: true,
 	imports: [ReactiveFormsModule],
 	styleUrl: './locale-search-form.component.scss',
-	template: `
-		<form class="search-form panel" [formGroup]="form" (ngSubmit)="submit()">
-			<div class="field">
-				<label for="latitudine">Latitudine</label>
-				<input id="latitudine" type="number" step="0.000001" formControlName="latitudine" />
-			</div>
-
-			<div class="field">
-				<label for="longitudine">Longitudine</label>
-				<input id="longitudine" type="number" step="0.000001" formControlName="longitudine" />
-			</div>
-
-			<button class="pill-button" type="submit" [disabled]="form.invalid">Cerca locali</button>
-		</form>
-	`,
+	templateUrl: './locale-search-form.component.html',
 })
 export class LocaleSearchFormComponent {
 	private readonly fb = inject(FormBuilder);

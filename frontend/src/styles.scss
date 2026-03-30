@@ -172,12 +172,7 @@ app-nearby-page .leaflet-container {
 }
 
 app-nearby-page .leaflet-control-attribution {
-	margin: 0 0.8rem 0.75rem 0;
-	padding: 0.18rem 0.45rem;
-	border-radius: 0.45rem;
-	background: rgba(18, 18, 20, 0.82);
-	color: #908893;
-	backdrop-filter: blur(10px);
+	display: none !important;
 }
 
 app-nearby-page .leaflet-control-attribution a {

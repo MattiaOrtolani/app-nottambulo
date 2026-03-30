@@ -10,9 +10,12 @@ import {
 	inject,
 	signal,
 } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import * as L from 'leaflet';
-import { Locale, LocaleType, NearbyLocale } from '../models/locale.model';
-import { LocaleApiService } from '../services/locale-api.service';
+import { Locale, LocaleType, NearbyLocale } from '../../models/locale.model';
+import { LocaleApiService } from '../../services/locale-api.service';
+import { MobileMenuService } from '../../core/mobile-menu.service';
+import { NAVIGATION_LINKS } from '../../core/navigation-links';
 
 type MapFilter = 'ALL' | 'CLUB' | 'BAR' | 'JAZZ' | 'LOUNGE';
 
@@ -28,110 +31,9 @@ const RESULTS_STEP = 10;
 @Component({
 	selector: 'app-nearby-page',
 	standalone: true,
-	imports: [NgIf, DecimalPipe],
+	imports: [NgIf, DecimalPipe, RouterLink, RouterLinkActive],
 	styleUrl: './nearby-page.component.scss',
-	template: `
-		<section class="map-page">
-			<aside class="map-sidebar">
-				<div class="sidebar-search">
-					<input
-						type="search"
-						placeholder="Cerca locale o zona..."
-						[value]="searchTerm()"
-						(input)="handleSearchInput($event)"
-					/>
-				</div>
-
-				<div class="filter-row">
-					@for (filter of filters; track filter) {
-						<button
-							type="button"
-							class="filter-chip"
-							[class.filter-chip-active]="activeFilter() === filter"
-							(click)="setActiveFilter(filter)"
-						>
-							{{ getFilterLabel(filter) }}
-						</button>
-					}
-				</div>
-
-				<div class="sidebar-divider"></div>
-
-				<p *ngIf="loading()" class="status status-info">Sto caricando la mappa dei locali...</p>
-				<p *ngIf="error()" class="status status-error">{{ error() }}</p>
-
-				<div class="sidebar-results">
-					<div class="sidebar-list">
-						@for (locale of filteredLocales(); track locale.id) {
-							<button
-								type="button"
-								class="locale-row"
-								[class.locale-row-active]="activeLocale()?.id === locale.id"
-								(click)="selectLocale(locale)"
-							>
-								<div class="locale-row-head">
-									<h2>{{ locale.nome }}</h2>
-									<span
-										*ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined"
-										class="locale-distance"
-									>
-										{{ locale.distanzaKm | number: '1.1-1' }} km
-									</span>
-								</div>
-
-								<p class="locale-meta">{{ getSidebarMeta(locale) }}</p>
-								<p *ngIf="getSidebarCopy(locale)" class="locale-copy">{{ getSidebarCopy(locale) }}</p>
-							</button>
-						}
-					</div>
-
-					<button
-						*ngIf="showExtendSearchButton()"
-						type="button"
-						class="extend-search-button"
-						(click)="extendSearch()"
-					>
-						Estendi ricerca
-					</button>
-				</div>
-
-				<p *ngIf="!loading() && !error() && filteredLocales().length === 0" class="status status-info">
-					Nessun locale vicino disponibile in questo momento.
-				</p>
-			</aside>
-
-			<section class="map-stage">
-				<div class="map-toolbar">
-					<button type="button" class="map-tool" (click)="zoomIn()">+</button>
-					<button type="button" class="map-tool" (click)="zoomOut()">−</button>
-					<button type="button" class="map-tool" (click)="centerOnUser()">⌖</button>
-				</div>
-
-				<div class="map-surface">
-					<div #mapHost class="osm-map-host" aria-label="Mappa OpenStreetMap con tema dark"></div>
-
-					<article class="map-detail" *ngIf="activeLocale() as locale">
-						<div class="map-detail-icon">{{ getTypeBadge(locale.tipo) }}</div>
-
-						<div class="map-detail-copy">
-							<h3>{{ locale.nome }}</h3>
-							<p>
-								{{ getSelectedAddress(locale) }}
-								<span *ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined">
-									• {{ locale.distanzaKm | number: '1.1-1' }} km da te
-								</span>
-							</p>
-
-							<div class="map-detail-tags">
-								<span class="detail-tag detail-tag-accent">{{ getBottomTypeLabel(locale.tipo) }}</span>
-								<span class="detail-tag detail-tag-primary">Aperto ora</span>
-							</div>
-						</div>
-					</article>
-				</div>
-			</section>
-		</section>
-	`,
+	templateUrl: './nearby-page.component.html',
 })
 export class NearbyPageComponent implements AfterViewInit, OnDestroy {
 	@ViewChild('mapHost', { static: true }) private mapHost?: ElementRef<HTMLDivElement>;
@@ -153,6 +55,10 @@ export class NearbyPageComponent implements AfterViewInit, OnDestroy {
 	protected readonly currentPosition = signal(DEFAULT_POSITION);
 	protected readonly selectedLocaleDetail = signal<Locale | null>(null);
 	protected readonly nearbyLimit = signal(RESULTS_STEP);
+	protected readonly navLinks = NAVIGATION_LINKS;
+	protected readonly exactOptions = { exact: true } as const;
+	protected readonly looseOptions = { exact: false } as const;
+	protected readonly mobileMenuService = inject(MobileMenuService);
 	private readonly mapReady = signal(false);
 	private readonly detailsVersion = signal(0);
 	private readonly localeDetailsCache = new Map<number, Locale>();
@@ -274,6 +180,7 @@ export class NearbyPageComponent implements AfterViewInit, OnDestroy {
 	protected selectLocale(locale: NearbyLocale): void {
 		this.selectedLocaleId.set(locale.id);
 		this.loadLocaleDetail(locale.id);
+		this.mobileMenuService.close();
 
 		if (this.map) {
 			this.map.flyTo([locale.latitudine, locale.longitudine], Math.max(this.map.getZoom(), 14), {
@@ -378,14 +285,6 @@ export class NearbyPageComponent implements AfterViewInit, OnDestroy {
 				subdomains: 'abcd',
 				maxZoom: 20,
 			}).addTo(this.map);
-
-			L.control
-				.attribution({
-					position: 'bottomright',
-					prefix: false,
-				})
-				.addAttribution('&copy; OpenStreetMap &copy; CARTO')
-				.addTo(this.map);
 
 			this.localeMarkersLayer = L.layerGroup().addTo(this.map);
 			this.mapReady.set(true);

@@ -5,12 +5,12 @@ export const routes: Routes = [
 	{
 		path: '',
 		loadComponent: () =>
-			import('./pages/landing-page.component').then((module) => module.LandingPageComponent),
+			import('./pages/landing-page/landing-page.component').then((module) => module.LandingPageComponent),
 	},
 	{
 		path: 'mappa',
 		loadComponent: () =>
-			import('./pages/nearby-page.component').then((module) => module.NearbyPageComponent),
+			import('./pages/nearby-page/nearby-page.component').then((module) => module.NearbyPageComponent),
 	},
 	{
 		path: 'nearby',
@@ -20,7 +20,7 @@ export const routes: Routes = [
 	{
 		path: 'login',
 		loadComponent: () =>
-			import('./pages/login-page.component').then((module) => module.LoginPageComponent),
+			import('./pages/login-page/login-page.component').then((module) => module.LoginPageComponent),
 	},
 	{
 		path: 'admin',
@@ -30,7 +30,9 @@ export const routes: Routes = [
 	{
 		path: 'admin/locali',
 		loadComponent: () =>
-			import('./pages/admin-locali-page.component').then((module) => module.AdminLocaliPageComponent),
+			import('./pages/admin-locali-page/admin-locali-page.component').then(
+				(module) => module.AdminLocaliPageComponent,
+			),
 		canActivate: [adminGuard],
 	},
 	{

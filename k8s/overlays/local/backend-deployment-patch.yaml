@@ -1,0 +1,13 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: backend
+ namespace: app-nottambulo
+spec:
+ template:
+  spec:
+   containers:
+    - name: backend
+      env:
+       - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+         value: http://keycloak.keycloak.svc.cluster.local:8080/realms/app-nottambulo/protocol/openid-connect/certs

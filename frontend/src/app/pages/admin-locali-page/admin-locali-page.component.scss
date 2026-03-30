@@ -1,7 +1,14 @@
+:host {
+	display: block;
+	min-height: 100%;
+	background: var(--bg);
+}
+
 .admin-layout {
 	display: grid;
 	gap: 2rem;
 	padding-top: 1.5rem;
+	padding-bottom: 3rem;
 	grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
 	align-items: start;
 }
@@ -22,7 +29,7 @@
 .stats-grid,
 .admin-list,
 .admin-items,
-.admin-item {
+.admin-toolbar {
 	display: grid;
 	gap: 1rem;
 }
@@ -97,8 +104,7 @@ h2 {
 }
 
 .admin-topbar,
-.list-header,
-.item-actions {
+.list-header {
 	display: flex;
 	justify-content: space-between;
 	gap: 1rem;
@@ -125,7 +131,7 @@ h1 {
 }
 
 .stats-grid {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(0, min(32rem, 100%));
 }
 
 .stat-card {
@@ -152,12 +158,52 @@ h1 {
 	padding: 1.35rem;
 }
 
-h2 {
-	font-size: 1.65rem;
+.admin-toolbar {
+	gap: 1.25rem;
+	padding: 1.15rem 0 0;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	background: transparent;
 }
 
-.item-actions {
-	justify-content: flex-end;
+.toolbar-heading {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.toolbar-copy,
+.toolbar-count {
+	margin: 0;
+	color: var(--muted);
+}
+
+.toolbar-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.toolbar-field {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.toolbar-field span {
+	color: var(--muted-strong);
+	font-size: 0.95rem;
+}
+
+.toolbar-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	padding-top: 0.35rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+h2 {
+	font-size: 1.65rem;
 }
 
 @media (max-width: 980px) {
@@ -178,5 +224,9 @@ h2 {
 
 	.admin-list {
 		padding: 1.2rem;
+	}
+
+	.toolbar-grid {
+		grid-template-columns: 1fr;
 	}
 }

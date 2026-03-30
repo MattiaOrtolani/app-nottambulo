@@ -57,22 +57,22 @@ Workflow GitOps/prod:
 - fai push sul repository
 - Argo CD continua a usare `k8s/overlays/prod/`
 
+### Overlay e immagini
+
+L’overlay `k8s/overlays/local/` applica patch (es. `backend-image-patch.yaml`, `frontend-image-patch.yaml`) che puntano alle immagini contrassegnate `:local` e disabilitano il pull con `imagePullPolicy: Never`. Lo stesso overlay applica `backend-config-patch.yaml` e `backend-deployment-patch.yaml` per usare valori locali di ConfigMap/Secret (es. `KEYCLOAK_AUTH_URL`) quando esegui tutto sul cluster di sviluppo.
+
+Al contrario, `k8s/overlays/prod/` non modifica i tag e lascia le immagini puntare a `ghcr.io/ortocani/app-nottambulo-backend:latest` e analoghi per frontend e postgres, così Argo CD può sincronizzare il cluster di produzione con gli artefatti già buildati e pubblicati su GitHub Container Registry. Questa divisione è il motivo per cui non serve sempre eseguire `scripts/build-local-images.sh` in produzione.
+
+`k8s/argocd/application.yaml` descrive l’Application che punta alla directory `k8s/overlays/prod/` e si occupa di aggiornare backend/frontend/postgres nelle varie environment (prod/qa) quando ci sono nuovi commit o nuove immagini su GHCR.
+
 ## Seed dati demo
 
 Per popolare PostgreSQL con dati demo in cluster:
 
 - esegui `scripts/seed-locali-lombardia-300.sh`
-- oppure usa `scripts/seed-locali.sh`
 
 Lo script:
 
 - svuota la tabella `locali`
 - reinizializza gli ID
 - inserisce 300 locali demo utili per test mappa e nearby API
-
-## Evoluzioni possibili
-
-- separazione `base/` e `overlays/`
-- aggiunta di `kustomization.yaml`
-- gestione ambienti multipli come dev, test e prod
-- integrazione con secret manager esterno

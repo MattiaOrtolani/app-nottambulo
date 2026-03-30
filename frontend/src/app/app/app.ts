@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { ShellHeaderComponent } from './core/shell-header.component';
+import { ShellHeaderComponent } from '../core/shell-header/shell-header.component';
 
 @Component({
 	selector: 'app-root',

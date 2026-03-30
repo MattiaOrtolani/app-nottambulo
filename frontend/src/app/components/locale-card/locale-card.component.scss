@@ -32,3 +32,22 @@ p,
 	color: var(--muted);
 	line-height: 1.6;
 }
+
+.card-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.85rem;
+	flex-wrap: wrap;
+	padding-top: 0.2rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 640px) {
+	.card-actions {
+		justify-content: stretch;
+	}
+
+	.card-actions button {
+		flex: 1 1 100%;
+	}
+}
