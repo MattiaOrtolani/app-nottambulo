@@ -1,0 +1,21 @@
+		<article class="card panel">
+			<div class="card-top">
+				<span class="tag">{{ locale.tipo | titlecase }}</span>
+				<span *ngIf="locale.distanzaKm !== null && locale.distanzaKm !== undefined" class="distance">
+					{{ locale.distanzaKm | number: '1.1-2' }} km
+				</span>
+			</div>
+
+			<h3>{{ locale.nome }}</h3>
+			<p>{{ locale.descrizione }}</p>
+
+			<div class="coords">
+				<span>Lat {{ locale.latitudine | number: '1.2-5' }}</span>
+				<span>Lon {{ locale.longitudine | number: '1.2-5' }}</span>
+			</div>
+
+			<div class="card-actions">
+				<button class="ghost-button" type="button" (click)="edit.emit()">Modifica</button>
+				<button class="danger-button" type="button" (click)="delete.emit()">Elimina</button>
+			</div>
+		</article>

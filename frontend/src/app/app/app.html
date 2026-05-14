@@ -1,0 +1,7 @@
+<div class="app-shell">
+	<app-shell-header></app-shell-header>
+
+	<main class="app-content" [class.app-content-map]="isMapRoute()">
+		<router-outlet></router-outlet>
+	</main>
+</div>

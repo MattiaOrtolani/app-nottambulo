@@ -1,0 +1,14 @@
+<section class="login-page page">
+	<h1>Login Admin</h1>
+	<form (ngSubmit)="login()">
+		<label>Username <input name="username" [(ngModel)]="username" /></label>
+		<label>Password <input type="password" name="password" [(ngModel)]="password" /></label>
+		<button type="submit">Accedi</button>
+	</form>
+	@if (error()) {
+		<p class="error">{{ error() }}</p>
+	}
+	@if (authService.isAuthenticated()) {
+		<button type="button" (click)="logout()">Logout</button>
+	}
+</section>

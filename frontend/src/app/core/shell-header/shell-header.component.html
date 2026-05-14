@@ -1,0 +1,60 @@
+		<header class="shell-header">
+			<div class="page shell-bar">
+				<a routerLink="/" class="brand-mark" aria-label="Nottambulo">
+					<img class="brand-mark-logo" src="/logo.png" alt="Nottambulo" />
+				</a>
+				<nav class="nav page-nav" aria-label="Navigazione principale">
+					@for (link of primaryNavLinks; track link.path) {
+						<a
+							class="page-link"
+							[routerLink]="link.path"
+							routerLinkActive="active"
+							[routerLinkActiveOptions]="link.exact ? exactOptions : looseOptions"
+						>
+							<span class="page-link-icon" aria-hidden="true">
+								@if (link.path === '/') {
+									<svg viewBox="0 0 24 24" focusable="false">
+										<path
+											d="M4 11.5 12 5l8 6.5"
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="1.8"
+										/>
+										<path
+											d="M7 10.5V19h10v-8.5"
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="1.8"
+										/>
+									</svg>
+								} @else {
+									<svg viewBox="0 0 24 24" focusable="false">
+										<path
+											d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z"
+											fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="1.8"
+										/>
+										<circle cx="12" cy="10" r="2.4" fill="currentColor" />
+									</svg>
+								}
+							</span>
+							<span class="page-link-label">{{ link.label }}</span>
+						</a>
+					}
+				</nav>
+
+				<div class="session" *ngIf="authService.authenticated()">
+					<span class="welcome">
+						Admin
+					</span>
+					<button class="ghost-button logout-button" (click)="logout()">Logout</button>
+				</div>
+			</div>
+		</header>

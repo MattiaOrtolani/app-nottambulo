@@ -1,0 +1,123 @@
+		<section class="page admin-layout">
+			<aside class="admin-sidebar panel">
+				<div class="sidebar-head">
+					<p class="brand-mark">Nottambulo</p>
+					<p class="sidebar-kicker">Backoffice</p>
+				</div>
+
+				<nav class="sidebar-nav">
+					<a href="#nuovo-locale" class="sidebar-link sidebar-link-active">Nuovo locale</a>
+					<a href="#gestione-locali" class="sidebar-link">Gestione locali</a>
+				</nav>
+
+				<button class="logout-link" type="button" (click)="logout()">Esci</button>
+			</aside>
+
+			<div class="admin-main">
+				<div class="admin-topbar">
+					<div>
+						<p class="eyebrow">Area riservata</p>
+						<h1>{{ selectedLocale() ? 'Modifica locale' : 'Inserisci locale' }}</h1>
+					</div>
+					<p class="session-label">
+						{{ authService.authenticated() ? 'Admin autenticato' : 'Sessione non attiva' }}
+					</p>
+				</div>
+
+				<section class="stats-grid">
+					<article class="stat-card panel">
+						<p class="stat-label">Totale locali</p>
+						<p class="stat-value">
+							{{ locali().length }}
+							<span>attivi</span>
+						</p>
+					</article>
+				</section>
+
+				<p *ngIf="loading()" class="status status-info">Sto caricando i locali...</p>
+				<p *ngIf="message()" class="status status-success">{{ message() }}</p>
+				<p *ngIf="error()" class="status status-error">{{ error() }}</p>
+
+				<app-locale-form
+					[locale]="selectedLocale()"
+					(save)="handleSave($event)"
+					(cancel)="resetSelection()"
+				></app-locale-form>
+
+				<section class="admin-list panel" id="gestione-locali">
+					<div class="list-header">
+						<div>
+							<p class="section-kicker">Locali registrati</p>
+							<h2>Gestione locali</h2>
+						</div>
+						<button class="ghost-button" (click)="loadLocali()">Aggiorna lista</button>
+					</div>
+
+					<section class="admin-toolbar">
+						<div class="toolbar-heading">
+							<p class="section-kicker">Ricerca rapida</p>
+							<p class="toolbar-copy">
+								Cerca per nome o descrizione, filtra per tipologia e riordina i risultati.
+							</p>
+						</div>
+
+						<div class="toolbar-grid">
+							<label class="toolbar-field toolbar-field-wide">
+								<span>Cerca locale</span>
+								<input
+									type="text"
+									[value]="searchQuery()"
+									(input)="updateSearchQuery($any($event.target).value)"
+									placeholder="Nome, descrizione o parola chiave"
+								/>
+							</label>
+
+							<label class="toolbar-field">
+								<span>Tipo locale</span>
+								<select [value]="selectedType() ?? ''" (change)="updateSelectedType($any($event.target).value)">
+									<option value="">Tutti i tipi</option>
+									@for (type of localeTypes; track type) {
+										<option [value]="type">{{ formatLocaleType(type) }}</option>
+									}
+								</select>
+							</label>
+
+							<label class="toolbar-field">
+								<span>Ordina per</span>
+								<select [value]="sortOption()" (change)="updateSortOption($any($event.target).value)">
+									<option value="recent-first">Data aggiunta: piu recente</option>
+									<option value="oldest-first">Data aggiunta: piu vecchia</option>
+									<option value="name-asc">Alfabetico: A-Z</option>
+									<option value="name-desc">Alfabetico: Z-A</option>
+								</select>
+							</label>
+						</div>
+
+						<div class="toolbar-footer">
+							<p class="toolbar-count">
+								{{ filteredLocali().length }} risultati su {{ locali().length }}
+							</p>
+							<button class="ghost-button" type="button" (click)="resetFilters()">Reset filtri</button>
+						</div>
+					</section>
+
+					<div class="admin-items" *ngIf="filteredLocali().length > 0">
+						@for (locale of filteredLocali(); track locale.id) {
+							<app-locale-card
+								[locale]="locale"
+								(edit)="editLocale(locale)"
+								(delete)="deleteLocale(locale.id)"
+							></app-locale-card>
+						}
+					</div>
+
+					<p *ngIf="!loading() && locali().length === 0" class="status status-info">
+						Nessun locale registrato al momento.
+					</p>
+
+					<p *ngIf="!loading() && locali().length > 0 && filteredLocali().length === 0" class="status status-info">
+						Nessun locale corrisponde ai filtri attivi.
+					</p>
+				</section>
+			</div>
+		</section>

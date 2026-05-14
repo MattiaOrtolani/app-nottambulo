@@ -1,0 +1,8 @@
+node_modules/
+frontend/node_modules/
+.angular/
+frontend/.angular/
+target/
+backend/target/
+.env
+.DS_Store
