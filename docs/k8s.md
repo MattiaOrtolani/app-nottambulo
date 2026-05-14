@@ -59,7 +59,7 @@ Workflow GitOps/prod:
 
 ### Overlay e immagini
 
-L’overlay `k8s/overlays/local/` applica patch (es. `backend-image-patch.yaml`, `frontend-image-patch.yaml`) che puntano alle immagini contrassegnate `:local` e disabilitano il pull con `imagePullPolicy: Never`. Lo stesso overlay applica `backend-config-patch.yaml` e `backend-deployment-patch.yaml` per usare valori locali di ConfigMap/Secret (es. `KEYCLOAK_AUTH_URL`) quando esegui tutto sul cluster di sviluppo.
+L’overlay `k8s/overlays/local/` applica patch (es. `backend-image-patch.yaml`, `frontend-image-patch.yaml`) che puntano alle immagini contrassegnate `:local` e disabilitano il pull con `imagePullPolicy: Never`. Lo stesso overlay applica `backend-config-patch.yaml` e `backend-deployment-patch.yaml` per usare valori locali di ConfigMap/Secret (es. variabili auth JWT/backend) quando esegui tutto sul cluster di sviluppo.
 
 Al contrario, `k8s/overlays/prod/` non modifica i tag e lascia le immagini puntare a `ghcr.io/ortocani/app-nottambulo-backend:latest` e analoghi per frontend e postgres, così Argo CD può sincronizzare il cluster di produzione con gli artefatti già buildati e pubblicati su GitHub Container Registry. Questa divisione è il motivo per cui non serve sempre eseguire `scripts/build-local-images.sh` in produzione.
 

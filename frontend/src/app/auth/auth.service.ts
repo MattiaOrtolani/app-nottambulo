@@ -1,74 +1,40 @@
-import { Injectable, signal } from '@angular/core';
-import Keycloak, { KeycloakProfile } from 'keycloak-js';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 
-@Injectable({
-	providedIn: 'root',
-})
+interface LoginResponse {
+	token: string;
+	username: string;
+	role: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-	private keycloak?: Keycloak;
-	private initialized = false;
+	private readonly http = inject(HttpClient);
+	private readonly tokenSignal = signal<string | null>(localStorage.getItem('auth_token'));
+	private readonly roleSignal = signal<string | null>(localStorage.getItem('auth_role'));
+	readonly authenticated = computed(() => !!this.tokenSignal());
+	readonly isAdmin = computed(() => this.roleSignal() === 'ADMIN');
 
-	readonly authenticated = signal(false);
-	readonly isAdmin = signal(false);
-	readonly profile = signal<KeycloakProfile | null>(null);
-
-	async initialize(): Promise<void> {
-		if (this.initialized) {
-			return;
-		}
-
-		try {
-			this.keycloak = new Keycloak({
-				url: environment.keycloak.url,
-				realm: environment.keycloak.realm,
-				clientId: environment.keycloak.clientId,
-			});
-
-			const authenticated = await this.keycloak.init({
-				onLoad: 'check-sso',
-				pkceMethod: 'S256',
-				checkLoginIframe: false,
-				silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-			});
-
-			this.authenticated.set(authenticated);
-			this.isAdmin.set(this.keycloak.hasRealmRole('admin'));
-
-			if (authenticated) {
-				this.profile.set(await this.keycloak.loadUserProfile());
-			}
-		} catch (error) {
-			console.error('Keycloak initialization failed', error);
-			this.authenticated.set(false);
-			this.isAdmin.set(false);
-			this.profile.set(null);
-		}
-
-		this.initialized = true;
+	login(username: string, password: string) {
+		return this.http.post<LoginResponse>(`${environment.apiBaseUrl}/auth/login`, { username, password });
 	}
 
-	async login(redirectUri?: string): Promise<void> {
-		await this.keycloak?.login({
-			redirectUri: redirectUri ?? window.location.href,
-		});
+	storeSession(response: LoginResponse): void {
+		localStorage.setItem('auth_token', response.token);
+		localStorage.setItem('auth_role', response.role);
+		this.tokenSignal.set(response.token);
+		this.roleSignal.set(response.role);
 	}
 
-	async logout(): Promise<void> {
-		await this.keycloak?.logout({
-			redirectUri: window.location.origin,
-		});
-		this.authenticated.set(false);
-		this.isAdmin.set(false);
-		this.profile.set(null);
+	logout(): void {
+		localStorage.removeItem('auth_token');
+		localStorage.removeItem('auth_role');
+		this.tokenSignal.set(null);
+		this.roleSignal.set(null);
 	}
 
-	async getValidToken(): Promise<string | undefined> {
-		if (!this.keycloak || !this.authenticated()) {
-			return undefined;
-		}
-
-		await this.keycloak.updateToken(30);
-		return this.keycloak.token;
-	}
+	getToken(): string | null { return this.tokenSignal(); }
+	getRole(): string | null { return this.roleSignal(); }
+	isAuthenticated(): boolean { return this.authenticated(); }
 }

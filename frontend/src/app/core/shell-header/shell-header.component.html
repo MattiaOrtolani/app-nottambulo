@@ -52,7 +52,7 @@
 
 				<div class="session" *ngIf="authService.authenticated()">
 					<span class="welcome">
-						{{ authService.profile()?.firstName || authService.profile()?.username || 'Admin' }}
+						Admin
 					</span>
 					<button class="ghost-button logout-button" (click)="logout()">Logout</button>
 				</div>
